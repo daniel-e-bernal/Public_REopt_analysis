@@ -204,7 +204,6 @@ df = DataFrame(
     input_Longitude = [safe_get(site_analysis[i][2], ["Site", "longitude"]) for i in sites_iter],
     input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"])for i in sites_iter],
     input_PV_installed_cost = [round(safe_get(site_analysis[i][2], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
-    input_Wind_size = [round(safe_get(site_analysis[i][2], ["Wind", "size_kw"]), digits=4) for i in sites_iter],
     input_Wind_installed_cost = [round(safe_get(site_analysis[i][2], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
     input_Site_electric_load = [round(safe_get(site_analysis[i][2], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
     input_Site_building_type = [safe_get(site_analysis[i][2], ["ElectricLoad", "doe_reference_name"]) for i in sites_iter],
