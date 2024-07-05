@@ -19,11 +19,6 @@ using DelimitedFiles
 using Plots
 using Dates
 using Random
-using Shapefile
-using LibGEOS
-using GeoInterface
-using ArchGDAL
-using GeometryBasics
 
 # Function to safely extract values from JSON with default value if key is missing
 # default must be an integer since it does not take in strings
@@ -48,7 +43,7 @@ may be generated and are in the ocean.
 # Create Random Generator function to produce random lat/long locations within the US
 function generate_random_latitude()
     # Latitude bounds for contiguous US (approximate)
-    min_lat, max_lat = 24.396308, 49.384358
+    min_lat, max_lat = 26.396308, 35.384358
     #creates a random number from 0 - 1 using rand() then scales it based on the upper and lower bounds
     #add the minimum bound of lat to ensure within US region
     lat = rand() * (max_lat - min_lat) + min_lat
@@ -69,72 +64,7 @@ function generate_random_longitude()
     return lon
 end
 
-"""
-Below is a new way to generate random lat/long variables depending on the SHP file that I uploaded to this.
-"""
-"""
-# Load the shapefile containing the boundaries of the continental US
-function load_us_shapefile(filepath)
-    try
-        shapefile = Shapefile.Reader(filepath)
-        return shapefile
-    catch e
-        println("Error loading shapefile: e")
-        return nothing
-    end
-end
-println("Successfully loaded shpfile")
 
-# usage to load the shapefile
-shapefile_path = "C:/Users/dbernal/Documents/GitHub/Public_REopt_analysis/tl_2023_us_internationalboundary.shp"
-us_shapefile = load_us_shapefile(shapefile_path)
-
-if us_shapefile === nothing
-    error("Shapefile could not be loaded.")
-else
-    println("Shapefile loaded successfully.")
-end
-
-# Generate random latitude within the continental US bounds
-function generate_random_latitude()
-    min_lat, max_lat = 24.396308, 49.384358
-    return rand() * (max_lat - min_lat) + min_lat
-end
-println("Successfully loaded latitude")
-sleep(5)
-# Generate random longitude within the continental US bounds
-function generate_random_longitude()
-    min_lon, max_lon = -125.0, -66.93457
-    return rand() * (max_lon - min_lon) + min_lon
-end
-println("Successfully loaded longitude")
-sleep(5)
-
-# Check if the location (lat/long) is within the US boundary
-function is_within_us_boundary(lat, lon, shapefile)
-    point = lat, lon
-    for feature in shapefile
-        geom = Shapefile.get_geometry(feature)
-        if Shapefile.point_in_polygon(point, geom)
-            return true
-        end
-    end
-    return false
-end
-println("Successfully checked if it is within boundary")
-sleep(5)
-
-# Generate a random valid location within the continental US
-function generate_random_location(shapefile)
-    while true
-        lat = generate_random_latitude()
-        lon = generate_random_longitude()
-        if is_within_us_boundary(lat, lon, shapefile)
-            return lat, lon
-        end
-    end
-end
-"""
 """
 ======================================================================================================================================================
 """
@@ -220,7 +150,7 @@ input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 3)
+REopt_runs = fill(1, 500)
 
 site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
@@ -228,7 +158,7 @@ for i in sites_iter
     input_data_site = copy(input_data)
     #Site Specific Randomnization
     input_data_site["Site"]["latitude"] = generate_random_latitude()
-    input_data_site["Site"]["longitude"] = generate_random_location(us_shapefile)[2]
+    input_data_site["Site"]["longitude"] = generate_random_longitude()
     input_data_site["ElectricLoad"]["annual_kwh"] = generate_random_electricity_consumption()
     input_data_site["ElectricLoad"]["doe_reference_name"] = rand(doe_reference_building_list)
     input_data_site["ElectricTariff"]["blended_annual_demand_rate"] = generate_random_demand_charge()
@@ -271,7 +201,12 @@ for i in sites_iter
 
     results = run_reopt([m1,m2], inputs)
     append!(site_analysis, [(input_data_site, results)])
+    println("=======================================================")
+    println("=======================================================")
     println("Completed Optimization Run #$i")
+    println("=======================================================")
+    println("=======================================================")
+    sleep(35)
 end
 println("Completed Optimization")
 
@@ -279,7 +214,7 @@ println("Completed Optimization")
 df = DataFrame(
     input_Latitude = [safe_get(site_analysis[i][2], ["Site", "latitude"]) for i in sites_iter],
     input_Longitude = [safe_get(site_analysis[i][2], ["Site", "longitude"]) for i in sites_iter],
-    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"])for i in sites_iter],
+    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"]) for i in sites_iter],
     input_PV_installed_cost = [round(safe_get(site_analysis[i][2], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
     input_Wind_installed_cost = [round(safe_get(site_analysis[i][2], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
     input_Site_electric_load = [round(safe_get(site_analysis[i][2], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
