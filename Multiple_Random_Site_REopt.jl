@@ -72,21 +72,21 @@ end
 """
 Below is a new way to generate random lat/long variables depending on the SHP file that I uploaded to this.
 """
-"""
+
 # Load the shapefile containing the boundaries of the continental US
 function load_us_shapefile(filepath)
     try
-        shapefile = Shapefile.Reader(filepath)
+        shapefile = Shapefile.Table(filepath)
         return shapefile
     catch e
-        println("Error loading shapefile: e")
+        println("Error loading shapefile: $e")
         return nothing
     end
 end
 println("Successfully loaded shpfile")
 
 # usage to load the shapefile
-shapefile_path = "C:/Users/dbernal/Documents/GitHub/Public_REopt_analysis/tl_2023_us_internationalboundary.shp"
+shapefile_path = "./ShapeFiles for US/International Boundary/tl_2023_us_internationalboundary.shp"
 us_shapefile = load_us_shapefile(shapefile_path)
 
 if us_shapefile === nothing
@@ -112,10 +112,13 @@ sleep(5)
 
 # Check if the location (lat/long) is within the US boundary
 function is_within_us_boundary(lat, lon, shapefile)
-    point = lat, lon
+    point = LibGEOS.createPoint(lon, lat)
     for feature in shapefile
-        geom = Shapefile.get_geometry(feature)
-        if Shapefile.point_in_polygon(point, geom)
+        geom = Shapefile.shape(feature)
+        poly = GeoInterface.coordinates(geom)
+        #convert to LibGEOS Polygon
+        polygon = LibGEOS.createPolygon(poly)
+        if LibGEOS.contains(polygon, point)
             return true
         end
     end
@@ -134,7 +137,7 @@ function generate_random_location(shapefile)
         end
     end
 end
-"""
+
 """
 ======================================================================================================================================================
 """
@@ -227,8 +230,8 @@ sites_iter = eachindex(REopt_runs)
 for i in sites_iter
     input_data_site = copy(input_data)
     #Site Specific Randomnization
-    input_data_site["Site"]["latitude"] = generate_random_latitude()
-    input_data_site["Site"]["longitude"] = generate_random_location(us_shapefile)[2]
+    input_data_site["Site"]["latitude"] = generate_random_location(us_shapefile)
+    input_data_site["Site"]["longitude"] = generate_random_location(us_shapefile)
     input_data_site["ElectricLoad"]["annual_kwh"] = generate_random_electricity_consumption()
     input_data_site["ElectricLoad"]["doe_reference_name"] = rand(doe_reference_building_list)
     input_data_site["ElectricTariff"]["blended_annual_demand_rate"] = generate_random_demand_charge()
