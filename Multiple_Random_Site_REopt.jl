@@ -109,7 +109,7 @@ function generate_random_longitude()
 end
 println("Successfully loaded longitude")
 sleep(5)
-
+"""
 # Check if the location (lat/long) is within the US boundary
 function is_within_us_boundary(lat, lon, shapefile)
     point = LibGEOS.createPoint(lon, lat)
@@ -124,8 +124,6 @@ function is_within_us_boundary(lat, lon, shapefile)
     end
     return false
 end
-println("Successfully checked if it is within boundary")
-sleep(5)
 
 # Generate a random valid location within the continental US
 function generate_random_location(shapefile)
@@ -137,10 +135,8 @@ function generate_random_location(shapefile)
         end
     end
 end
+"""
 
-"""
-======================================================================================================================================================
-"""
 # Create Random Generator function to produce random annual energy consumptions for electricity
 function generate_random_electricity_consumption()
     #low bound for yearly energy consumption
@@ -217,6 +213,11 @@ NEM_list = [0, 25, 50, 100, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 2500
 #PV location
 PV_location = ["both", "ground", "roof" ]
 
+#read CSV file with USA coordinates
+coord_data = CSV.read("./random lat and long/usa_coordinates 1.csv", DataFrame)
+latitudes = coord_data.Latitude
+longitudes = coord_data.Longitude
+
 # Set up general inputs for randomized locations
 data_file = "General_Inputs.json"
 input_data = JSON.parsefile("scenarios/$data_file")
@@ -229,9 +230,15 @@ site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
 for i in sites_iter
     input_data_site = copy(input_data)
+
+    #Get lat/long for current site
+    lat = latitudes[i]
+    lon = longitudes[i]
+    #Assign lat and lon to REopt run
+    input_data_site["Site"]["latitude"] = lat
+    input_data_site["Site"]["longitude"] = lon
+
     #Site Specific Randomnization
-    input_data_site["Site"]["latitude"] = generate_random_location(us_shapefile)
-    input_data_site["Site"]["longitude"] = generate_random_location(us_shapefile)
     input_data_site["ElectricLoad"]["annual_kwh"] = generate_random_electricity_consumption()
     input_data_site["ElectricLoad"]["doe_reference_name"] = rand(doe_reference_building_list)
     input_data_site["ElectricTariff"]["blended_annual_demand_rate"] = generate_random_demand_charge()
@@ -282,7 +289,7 @@ println("Completed Optimization")
 df = DataFrame(
     input_Latitude = [safe_get(site_analysis[i][2], ["Site", "latitude"]) for i in sites_iter],
     input_Longitude = [safe_get(site_analysis[i][2], ["Site", "longitude"]) for i in sites_iter],
-    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"])for i in sites_iter],
+    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"]) for i in sites_iter],
     input_PV_installed_cost = [round(safe_get(site_analysis[i][2], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
     input_Wind_installed_cost = [round(safe_get(site_analysis[i][2], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
     input_Site_electric_load = [round(safe_get(site_analysis[i][2], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
