@@ -224,7 +224,7 @@ input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 3)
+REopt_runs = fill(1, 1)
 
 site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
@@ -287,19 +287,19 @@ println("Completed Optimization")
 
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    input_Latitude = [safe_get(site_analysis[i][2], ["Site", "latitude"]) for i in sites_iter],
-    input_Longitude = [safe_get(site_analysis[i][2], ["Site", "longitude"]) for i in sites_iter],
-    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"]) for i in sites_iter],
-    input_PV_installed_cost = [round(safe_get(site_analysis[i][2], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
-    input_Wind_installed_cost = [round(safe_get(site_analysis[i][2], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
-    input_Site_electric_load = [round(safe_get(site_analysis[i][2], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
-    input_Site_building_type = [safe_get(site_analysis[i][2], ["ElectricLoad", "doe_reference_name"]) for i in sites_iter],
-    input_Site_roofspace = [round(safe_get(site_analysis[i][2], ["Site", "roof_squarefeet"]), digits=0) for i in sites_iter],
-    input_Site_landspace = [round(safe_get(site_analysis[i][2], ["Site", "land_acres"]), digits=0) for i in sites_iter],
-    input_Site_NEM_limit = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "net_metering_limit_kw"]), digits=0) for i in sites_iter],
-    input_Site_net_billing_rate = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "wholesale_rate"]), digits=2) for i in sites_iter],
-    input_Site_electricity_cost_per_kwh = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "blended_annual_energy_rate"]), digits=2) for i in sites_iter],
-    input_Site_demand_charge_cost_per_kw = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "blended_annual_demand_rate"]), digits=2) for i in sites_iter],
+    input_Latitude = [safe_get(site_analysis[i][1], ["Site", "latitude"]) for i in sites_iter],
+    input_Longitude = [safe_get(site_analysis[i][1], ["Site", "longitude"]) for i in sites_iter],
+    input_PV_location = [safe_get(site_analysis[i][1], ["PV", "location"]) for i in sites_iter],
+    input_PV_installed_cost = [round(safe_get(site_analysis[i][1], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
+    input_Wind_installed_cost = [round(safe_get(site_analysis[i][1], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
+    input_Site_electric_load = [round(safe_get(site_analysis[i][1], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
+    input_Site_building_type = [safe_get(site_analysis[i][1], ["ElectricLoad", "doe_reference_name"]) for i in sites_iter],
+    input_Site_roofspace = [round(safe_get(site_analysis[i][1], ["Site", "roof_squarefeet"]), digits=0) for i in sites_iter],
+    input_Site_landspace = [round(safe_get(site_analysis[i][1], ["Site", "land_acres"]), digits=0) for i in sites_iter],
+    input_Site_NEM_limit = [round(safe_get(site_analysis[i][1], ["ElectricUtility", "net_metering_limit_kw"]), digits=0) for i in sites_iter],
+    input_Site_net_billing_rate = [round(safe_get(site_analysis[i][1], ["ElectricTariff", "wholesale_rate"]), digits=2) for i in sites_iter],
+    input_Site_electricity_cost_per_kwh = [round(safe_get(site_analysis[i][1], ["ElectricTariff", "blended_annual_energy_rate"]), digits=2) for i in sites_iter],
+    input_Site_demand_charge_cost_per_kw = [round(safe_get(site_analysis[i][1], ["ElectricTariff", "blended_annual_demand_rate"]), digits=2) for i in sites_iter],
     output_PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     output_PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
     output_PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
