@@ -224,7 +224,7 @@ input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 1)
+REopt_runs = fill(1, 100)
 
 site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
@@ -285,6 +285,10 @@ for i in sites_iter
 end
 println("Completed Optimization")
 
+#write onto JSON file
+write.("./results/REopt_data.json", JSON.json(site_analysis))
+println("Successfully printed results on JSON file")
+
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
     input_Latitude = [safe_get(site_analysis[i][1], ["Site", "latitude"]) for i in sites_iter],
@@ -315,7 +319,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "C:/Users/dbernal/Documents/GitHub/Public_REopt_analysis/results/REopt_data.xlsx"
+file_storage_location = "./results/REopt_data.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
