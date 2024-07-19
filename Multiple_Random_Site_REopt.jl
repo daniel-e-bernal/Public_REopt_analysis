@@ -224,7 +224,7 @@ input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 100)
+REopt_runs = fill(1, 2)
 
 site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
@@ -233,19 +233,31 @@ for i in sites_iter
 
     #Get lat/long for current site
     lat = latitudes[i]
+    println("====================================")
+    println("====================================")
+    println(lat)
     lon = longitudes[i]
+    println(lon)
+    println("====================================")
+    println("====================================")
     #Assign lat and lon to REopt run
     input_data_site["Site"]["latitude"] = lat
     input_data_site["Site"]["longitude"] = lon
 
     #Site Specific Randomnization
     input_data_site["ElectricLoad"]["annual_kwh"] = generate_random_electricity_consumption()
+    println(input_data_site["ElectricLoad"]["annual_kwh"])
     input_data_site["ElectricLoad"]["doe_reference_name"] = rand(doe_reference_building_list)
+    println(input_data_site["ElectricLoad"]["doe_reference_name"])
     input_data_site["ElectricTariff"]["blended_annual_demand_rate"] = generate_random_demand_charge()
+    println(input_data_site["ElectricTariff"]["blended_annual_demand_rate"])
     input_data_site["ElectricTariff"]["blended_annual_energy_rate"] = generate_random_electric_tariff()
+    println(input_data_site["ElectricTariff"]["blended_annual_energy_rate"])
     input_data_site["ElectricUtility"]["net_metering_limit_kw"] = rand(NEM_list)
+    println(input_data_site["ElectricUtility"]["net_metering_limit_kw"])
     input_data_site["ElectricTariff"]["wholesale_rate"] = rand() * input_data_site["ElectricTariff"]["blended_annual_energy_rate"]
     input_data_site["PV"]["location"] = rand(PV_location)
+    println(input_data_site["PV"]["location"])
 
     #if loop for space availability
     if input_data_site["PV"]["location"] == "ground"
