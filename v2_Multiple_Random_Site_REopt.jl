@@ -144,21 +144,37 @@ NEM_list = [0, 25, 50, 100, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000, 2500
 #PV location
 PV_location = ["both", "ground", "roof" ]
 
+#read CSV file with USA coordinates
+coord_data = CSV.read("./random lat and long/usa_coordinates 1.csv", DataFrame)
+latitudes = coord_data.Latitude
+longitudes = coord_data.Longitude
+
 # Set up general inputs for randomized locations
 data_file = "General_Inputs.json"
 input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 500)
+REopt_runs = fill(1, 2)
 
+input_data_dic = [] #to store the input_data_site
 site_analysis = [] #this is to store inputs and outputs of REopt runs
 sites_iter = eachindex(REopt_runs)
 for i in sites_iter
     input_data_site = copy(input_data)
-    #Site Specific Randomnization
-    input_data_site["Site"]["latitude"] = generate_random_latitude()
-    input_data_site["Site"]["longitude"] = generate_random_longitude()
+    #Get lat/long for current site
+    lat = latitudes[i]
+    println("====================================")
+    println("====================================")
+    println(lat)
+    lon = longitudes[i]
+    println(lon)
+    println("====================================")
+    println("====================================")
+    #Assign lat and lon to REopt run
+    input_data_site["Site"]["latitude"] = lat
+    input_data_site["Site"]["longitude"] = lon
+    
     input_data_site["ElectricLoad"]["annual_kwh"] = generate_random_electricity_consumption()
     input_data_site["ElectricLoad"]["doe_reference_name"] = rand(doe_reference_building_list)
     input_data_site["ElectricTariff"]["blended_annual_demand_rate"] = generate_random_demand_charge()
@@ -180,7 +196,6 @@ for i in sites_iter
     input_data_site["Wind"]["installed_cost_per_kw"] = generate_random_Wind_cost()
     input_data_site["PV"]["installed_cost_per_kw"] = generate_random_PV_cost()
 
-    
     s = Scenario(input_data_site)
     inputs = REoptInputs(s)
 
@@ -192,7 +207,7 @@ for i in sites_iter
      "log_to_console" => false)
      )
 
-    m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
+     m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, 
      "time_limit" => 600.0,
      "mip_rel_gap" => 0.01,
      "output_flag" => false, 
@@ -200,31 +215,43 @@ for i in sites_iter
      )            
 
     results = run_reopt([m1,m2], inputs)
+    println("=======================================================")
+    println("=======================================================")
+    println("The input data site is")
+    println(input_data_site)
+    sleep(25)
     append!(site_analysis, [(input_data_site, results)])
     println("=======================================================")
     println("=======================================================")
     println("Completed Optimization Run #$i")
     println("=======================================================")
     println("=======================================================")
-    sleep(35)
+    #store input_data_site
+    append!(input_data_dic, [deepcopy(input_data_site)])
+    println(input_data_dic[i])
+    sleep(10)
 end
 println("Completed Optimization")
 
+#write onto JSON file
+write.("./results/v2_REopt_data.json", JSON.json(site_analysis))
+println("Successfully printed results on JSON file")
+
 # Populate the DataFrame with the results produced and inputs
 df = DataFrame(
-    input_Latitude = [safe_get(site_analysis[i][2], ["Site", "latitude"]) for i in sites_iter],
-    input_Longitude = [safe_get(site_analysis[i][2], ["Site", "longitude"]) for i in sites_iter],
-    input_PV_location = [safe_get(site_analysis[i][2], ["PV", "location"]) for i in sites_iter],
-    input_PV_installed_cost = [round(safe_get(site_analysis[i][2], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
-    input_Wind_installed_cost = [round(safe_get(site_analysis[i][2], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
-    input_Site_electric_load = [round(safe_get(site_analysis[i][2], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
-    input_Site_building_type = [safe_get(site_analysis[i][2], ["ElectricLoad", "doe_reference_name"]) for i in sites_iter],
-    input_Site_roofspace = [round(safe_get(site_analysis[i][2], ["Site", "roof_squarefeet"]), digits=0) for i in sites_iter],
-    input_Site_landspace = [round(safe_get(site_analysis[i][2], ["Site", "land_acres"]), digits=0) for i in sites_iter],
-    input_Site_NEM_limit = [round(safe_get(site_analysis[i][2], ["ElectricUtility", "net_metering_limit_kw"]), digits=0) for i in sites_iter],
-    input_Site_net_billing_rate = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "wholesale_rate"]), digits=2) for i in sites_iter],
-    input_Site_electricity_cost_per_kwh = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "blended_annual_energy_rate"]), digits=2) for i in sites_iter],
-    input_Site_demand_charge_cost_per_kw = [round(safe_get(site_analysis[i][2], ["ElectricTariff", "blended_annual_demand_rate"]), digits=2) for i in sites_iter],
+    input_Latitude = [safe_get(input_data_dic[i], ["Site", "latitude"]) for i in sites_iter],
+    input_Longitude = [safe_get(input_data_dic[i], ["Site", "longitude"]) for i in sites_iter],
+    input_PV_location = [safe_get(input_data_dic[i], ["PV", "location"]) for i in sites_iter],
+    input_PV_installed_cost = [round(safe_get(input_data_dic[i], ["PV", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
+    input_Wind_installed_cost = [round(safe_get(input_data_dic[i], ["Wind", "installed_cost_per_kw"]), digits=2) for i in sites_iter],
+    input_Site_electric_load = [round(safe_get(input_data_dic[i], ["ElectricLoad", "annual_kwh"]), digits=0) for i in sites_iter],
+    input_Site_building_type = [safe_get(input_data_dic[i], ["ElectricLoad", "doe_reference_name"]) for i in sites_iter],
+    input_Site_roofspace = [round(safe_get(input_data_dic[i], ["Site", "roof_squarefeet"]), digits=0) for i in sites_iter],
+    input_Site_landspace = [round(safe_get(input_data_dic[i], ["Site", "land_acres"]), digits=0) for i in sites_iter],
+    input_Site_NEM_limit = [round(safe_get(input_data_dic[i], ["ElectricUtility", "net_metering_limit_kw"]), digits=0) for i in sites_iter],
+    input_Site_net_billing_rate = [round(safe_get(input_data_dic[i], ["ElectricTariff", "wholesale_rate"]), digits=2) for i in sites_iter],
+    input_Site_electricity_cost_per_kwh = [round(safe_get(input_data_dic[i], ["ElectricTariff", "blended_annual_energy_rate"]), digits=2) for i in sites_iter],
+    input_Site_demand_charge_cost_per_kw = [round(safe_get(input_data_dic[i], ["ElectricTariff", "blended_annual_demand_rate"]), digits=2) for i in sites_iter],
     output_PV_size = [round(safe_get(site_analysis[i][2], ["PV", "size_kw"]), digits=0) for i in sites_iter],
     output_PV_energy_lcoe = [round(safe_get(site_analysis[i][2], ["PV", "lcoe_per_kwh"]), digits=0) for i in sites_iter],
     output_PV_energy_exported = [round(safe_get(site_analysis[i][2], ["PV", "annual_energy_exported_kwh"]), digits=0) for i in sites_iter],
@@ -240,7 +267,7 @@ df = DataFrame(
 println(df)
 
 # Define path to xlsx file
-file_storage_location = "C:/Users/dbernal/Documents/GitHub/Public_REopt_analysis/results/REopt_data.xlsx"
+file_storage_location = "./results/REopt_data.xlsx"
 
 # Check if the Excel file already exists
 if isfile(file_storage_location)
@@ -248,7 +275,7 @@ if isfile(file_storage_location)
     XLSX.openxlsx(file_storage_location, mode="rw") do xf
         counter = 0
         while true
-            sheet_name = "Results" * string(counter)
+            sheet_name = "v2_Results" * string(counter)
             try
                 sheet = xf[sheet_name]
                 counter += 1
@@ -256,7 +283,7 @@ if isfile(file_storage_location)
                 break
             end
         end
-        sheet_name = "Results" * string(counter)
+        sheet_name = "v2_Results" * string(counter)
         # Add new sheet
         XLSX.addsheet!(xf, sheet_name)
         # Write DataFrame to the new sheet
