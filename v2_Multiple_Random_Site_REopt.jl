@@ -36,34 +36,6 @@ function safe_get(data::Dict{String, Any}, keys::Vector{String}, default=0)
         end
     end
 end
-"""
-Below are two function that can be used to produce random lat/long coordinates, however, some of them
-may be generated and are in the ocean.
-"""
-# Create Random Generator function to produce random lat/long locations within the US
-function generate_random_latitude()
-    # Latitude bounds for contiguous US (approximate)
-    min_lat, max_lat = 26.396308, 35.384358
-    #creates a random number from 0 - 1 using rand() then scales it based on the upper and lower bounds
-    #add the minimum bound of lat to ensure within US region
-    lat = rand() * (max_lat - min_lat) + min_lat
-   
-    return lat
-end
-
-# Create Random Generator function to produce random lat/long locations within the US
-function generate_random_longitude()
-    
-    # Longitude bounds for contiguous US (approximate)
-    min_lon, max_lon = -125.0, -66.93457
-    #creates a random number from 0 - 1 using rand() then scales it based on the upper and lower bounds
-    #add the minimum bound of long to ensure within US region
-    
-    lon = rand() * (max_lon - min_lon) + min_lon
-    
-    return lon
-end
-
 
 """
 ======================================================================================================================================================
@@ -134,6 +106,14 @@ function generate_random_landspace()
     return land_space
 end
 
+function divisible_by_ten(i)
+    x = i // 10
+    if isinteger(x)
+        println("Taking a 10 minute break to cool down.")
+        sleep(600)
+    end
+end
+
 doe_reference_building_list = [ "FastFoodRest", "FullServiceRest", "Hospital", "LargeHotel",  "LargeOffice", "MediumOffice", "MidriseApartment", "Outpatient", "PrimarySchool",
 "RetailStore", "SecondarySchool", "SmallHotel", "SmallOffice", "StripMall", "Supermarket", "Warehouse", "FlatLoad", "FlatLoad_24_5", "FlatLoad_16_7",
 "FlatLoad_16_5", "FlatLoad_8_7", "FlatLoad_8_5" ]
@@ -155,7 +135,7 @@ input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 2)
+REopt_runs = fill(1, 150)
 
 input_data_dic = [] #to store the input_data_site
 site_analysis = [] #this is to store inputs and outputs of REopt runs
@@ -218,8 +198,6 @@ for i in sites_iter
     println("=======================================================")
     println("=======================================================")
     println("The input data site is")
-    println(input_data_site)
-    sleep(25)
     append!(site_analysis, [(input_data_site, results)])
     println("=======================================================")
     println("=======================================================")
@@ -228,8 +206,8 @@ for i in sites_iter
     println("=======================================================")
     #store input_data_site
     append!(input_data_dic, [deepcopy(input_data_site)])
-    println(input_data_dic[i])
-    sleep(10)
+    
+    divisible_by_ten(i)
 end
 println("Completed Optimization")
 
