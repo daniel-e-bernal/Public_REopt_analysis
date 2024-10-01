@@ -1,0 +1,28 @@
+{
+    "Settings":{
+        
+    },
+    "Site": {
+        
+        },
+       
+    
+    "Financial": {
+        
+    },
+    "ElectricLoad": {
+                
+    },
+    "PV":{
+        
+    },     
+    "Wind":{
+
+    },  
+    "ElectricTariff": {
+
+    },
+    "ElectricUtility": {
+        
+    }
+  }

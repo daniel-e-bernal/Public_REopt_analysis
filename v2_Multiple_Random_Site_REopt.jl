@@ -130,12 +130,12 @@ latitudes = coord_data.Latitude
 longitudes = coord_data.Longitude
 
 # Set up general inputs for randomized locations
-data_file = "General_Inputs.json"
+data_file = "General_Inputs2.json"
 input_data = JSON.parsefile("scenarios/$data_file")
 println("Successfuly parsed input data JSON file")
 
 # up to 1000 runs
-REopt_runs = fill(1, 150)
+REopt_runs = fill(1, 4)
 
 input_data_dic = [] #to store the input_data_site
 site_analysis = [] #this is to store inputs and outputs of REopt runs
